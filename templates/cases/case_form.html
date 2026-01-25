@@ -1,0 +1,440 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-10">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0">{% if mode == "new" %}Nuevo caso{% else %}Editar caso{% endif %}</h5>
+      <a class="btn btn-outline-secondary" href="{% url 'case_list' %}">Volver</a>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+
+          <div class="row g-3">
+            <div class="col-md-3">
+              {{ form.cic.label_tag }}{{ form.cic }}
+              <div id="cicWarning" class="form-text text-danger" style="display:none;">
+                ⚠️ Ya existe un caso con ese CIC.
+                <a id="cicEditLink" href="#" class="ms-2">Editar ese caso</a>
+              </div>
+            </div>
+            <div class="col-md-5">{{ form.centro_medico.label_tag }}{{ form.centro_medico }}</div>
+            <div class="col-md-4">{{ form.fecha.label_tag }}{{ form.fecha }}</div>
+
+            <div class="col-md-3">{{ form.grupo_edad.label_tag }}{{ form.grupo_edad }}</div>
+            <div class="col-md-9">{{ form.secciones.label_tag }}{{ form.secciones }}</div>
+
+            <div class="col-md-6">{{ form.localizaciones.label_tag }}{{ form.localizaciones }}</div>
+            <div class="col-md-6">{{ form.patologias.label_tag }}{{ form.patologias }}</div>
+
+            <div class="col-12">{{ form.diagnostico_inicial.label_tag }}{{ form.diagnostico_inicial }}</div>
+            <div class="col-12">{{ form.comentarios.label_tag }}{{ form.comentarios }}</div>
+
+            <div class="col-md-6">
+                <div class="section-header mt-2">
+                  <span>Pruebas de imagen</span>
+                </div>
+                <div class="check-row">
+                {{ form.pruebas_imagen }}
+                </div>
+            </div>
+            
+            <div class="section-header mt-4">
+              <span>Cirugías / intervenciones</span>
+            </div>
+
+            <div class="proc-accordion" id="proc-accordion">
+            {% for group_name, keys in form.proc_groups.items %}
+                <div class="proc-group">
+                <button type="button" class="proc-header" aria-expanded="false">
+                    <span>{{ group_name }}</span>
+                    <span class="proc-count" data-group="{{ forloop.counter0 }}"></span>
+                    <span class="proc-chevron">▾</span>
+                </button>
+
+                <div class="proc-body" hidden>
+                    <div class="proc-items">
+                    {% for key, label in form.fields.procedimientos.choices %}
+                        {% if key in keys %}
+                        <label class="proc-item">
+                            <input type="checkbox"
+                                name="procedimientos"
+                                value="{{ key }}"
+                                {% if key in form.selected_procedimientos %}checked{% endif %}
+                            >
+                            <span>{{ label }}</span>
+                        </label>
+                        {% endif %}
+                    {% endfor %}
+                    </div>
+                </div>
+                </div>
+            {% endfor %}
+            </div>
+
+            <div class="col-12">
+              <div class="section-header mt-2">
+                  <span>Compartir con grupos</span>
+              </div>
+              {{ form.shared_groups }}
+            </div>
+          </div>
+
+          {# ===================== MULTIMEDIA ===================== #}
+          <div class="col-12">
+            <div class="section-header mt-2">
+              <span>Multimedia</span>
+            </div>
+
+            <div id="media-formset">
+              {{ media_formset.management_form }}
+
+              {% for f in media_formset %}
+                <div class="card p-3 mb-2 media-row">
+                  <div class="row g-2 align-items-end">
+                    <div class="col-md-6">
+                      {{ f.file.label_tag }}
+                      {{ f.file }}
+                    </div>
+
+                    <div class="col-md-4">
+                      {{ f.url.label_tag }}
+                      {{ f.url }}
+                    </div>
+
+                    <div class="col-md-2">
+                      {% if f.instance.pk %}
+                        <div class="form-check">
+                          {{ f.DELETE }}
+                          <label class="form-check-label" for="{{ f.DELETE.id_for_label }}">Eliminar</label>
+                        </div>
+                      {% else %}
+                        <button type="button" class="btn btn-outline-danger w-100 js-remove-media">Quitar</button>
+                      {% endif %}
+                    </div>
+
+                    <div class="col-12">
+                      {{ f.note.label_tag }}
+                      {{ f.note }}
+                    </div>
+                  </div>
+
+                  {# id oculto del inline formset #}
+                  {{ f.id }}
+                </div>
+              {% endfor %}
+            </div>
+
+            <button type="button" class="btn btn-outline-primary mt-2" id="addMediaRow">
+              + Añadir multimedia
+            </button>
+
+            <template id="media-empty-form">
+              <div class="card p-3 mb-2 media-row">
+                <div class="row g-2 align-items-end">
+                  <div class="col-md-6">
+                    {{ media_formset.empty_form.file.label_tag }}
+                    {{ media_formset.empty_form.file }}
+                  </div>
+
+                  <div class="col-md-4">
+                    {{ media_formset.empty_form.url.label_tag }}
+                    {{ media_formset.empty_form.url }}
+                  </div>
+
+                  <div class="col-md-2">
+                    <button type="button" class="btn btn-outline-danger w-100 js-remove-media">Quitar</button>
+                  </div>
+
+                  <div class="col-12">
+                    {{ media_formset.empty_form.note.label_tag }}
+                    {{ media_formset.empty_form.note }}
+                  </div>
+                </div>
+
+                {{ media_formset.empty_form.id }}
+              </div>
+            </template>
+          </div>
+          {# =================== /MULTIMEDIA =================== #}
+
+  
+            <div class="col-md-4 d-flex align-items-end gap-4 mt-4">
+
+            <!-- PUBLICADO -->
+            <div class="toggle-icon">
+                {{ form.publicado }}
+                <label for="id_publicado" class="icon-btn" title="Publicado">
+                <!-- icono (ej: “megáfono”) -->
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M3 11v2a1 1 0 0 0 1 1h2l5 3V7L6 10H4a1 1 0 0 0-1 1zm14-6v14a1 1 0 0 0 1.447.894l3-1.5A1 1 0 0 0 22 17.5v-11a1 1 0 0 0-.553-.894l-3-1.5A1 1 0 0 0 17 5z"/>
+                </svg>
+                <span class="icon-label">Publicado</span>
+                </label>
+            </div>
+
+            <!-- INTERÉS DOCENTE -->
+            <div class="toggle-icon">
+                {{ form.interes_docente }}
+                <label for="id_interes_docente" class="icon-btn" title="Interés docente">
+                <!-- icono (birrete) -->
+                <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+                    <path d="M12 3 1 9l11 6 9-4.91V17h2V9L12 3zm-7 9.24V15c0 1.66 3.13 3 7 3s7-1.34 7-3v-2.76l-7 3.82-7-3.82z"/>
+                </svg>
+                <span class="icon-label">Interés Docente</span>
+                </label>
+            </div>
+
+            </div>
+
+            <!-- Dónde se ha publicado (lo dejamos igual) -->
+            <div class="col-md-8" id="publicado-en-wrap">
+            {{ form.publicado_en.label_tag }}{{ form.publicado_en }}
+            </div>
+
+          <div class="d-flex justify-content-end gap-2 mt-3">
+            {% if mode == "edit" %}
+              <a class="btn btn-outline-danger me-auto"
+                href="{% url 'case_delete' form.instance.pk %}">
+                Eliminar
+              </a>
+            {% endif %}
+            <button class="btn btn-success" type="submit">Guardar</button>
+            <a class="btn btn-outline-secondary" href="{% url 'case_list' %}">Cancelar</a>
+          </div>
+
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+
+  const cicInput = document.getElementById("id_cic");
+  const cicWarning = document.getElementById("cicWarning");
+  const cicEditLink = document.getElementById("cicEditLink");
+  const addBtn = document.getElementById("add-media");
+  const list = document.getElementById("media-forms");
+  const tpl = document.getElementById("media-empty-form");
+  const totalForms = document.querySelector("#id_media_set-TOTAL_FORMS");
+  const container = document.getElementById("media-formset");
+  let cicTimer = null;
+
+  function setCicWarning({ show, editUrl }){
+    if (!cicWarning) return;
+    cicWarning.style.display = show ? "block" : "none";
+
+    if (cicEditLink) {
+      if (show && editUrl) {
+        cicEditLink.href = editUrl;
+        cicEditLink.style.display = "inline";
+      } else {
+        cicEditLink.href = "#";
+        cicEditLink.style.display = "none";
+      }
+    }
+  }
+
+  function wireRemove(container){
+    container.querySelectorAll(".remove-media").forEach(btn => {
+      btn.addEventListener("click", () => btn.closest(".card").remove());
+    });
+  }
+
+  wireRemove(document);
+
+  addBtn?.addEventListener("click", () => {
+    const idx = parseInt(totalForms.value, 10);
+    const html = tpl.innerHTML.replaceAll("__prefix__", idx);
+    const wrapper = document.createElement("div");
+    wrapper.innerHTML = html.trim();
+    const node = wrapper.firstElementChild;
+
+    list.appendChild(node);
+    totalForms.value = idx + 1;
+
+    wireRemove(node);
+  });
+
+  if (cicInput) {
+    cicInput.addEventListener("input", () => {
+      clearTimeout(cicTimer);
+      const cic = cicInput.value.trim();
+
+      if (!cic) {
+        setCicWarning({ show: false });
+        return;
+      }
+
+      cicTimer = setTimeout(() => {
+        const pk = "{{ form.instance.pk|default:'' }}";
+        fetch(`{% url 'cic_exists' %}?cic=${encodeURIComponent(cic)}&pk=${encodeURIComponent(pk)}`)
+          .then(r => r.json())
+          .then(data => {
+            setCicWarning({
+              show: !!data.exists,
+              editUrl: data.edit_url || null
+            });
+          })
+          .catch(() => setCicWarning({ show: false }));
+      }, 350);
+    });
+  }
+
+
+  // ===== Bootstrap rápido para inputs (sin tocar TomSelect) =====
+  document.querySelectorAll("input[type=text], input[type=date], select, textarea").forEach(el => {
+    if (el.tagName === "SELECT") {
+      // Si NO es TomSelect, lo dejamos como select Bootstrap
+      if (!el.classList.contains("ts-select") && !["id_secciones","id_localizaciones","id_patologias","id_shared_groups"].includes(el.id)) {
+        el.classList.add("form-select");
+      }
+      return;
+    }
+    if (!el.classList.contains("form-check-input")) el.classList.add("form-control");
+  });
+
+
+  // Checkboxes normales
+  document.querySelectorAll("input[type=checkbox]").forEach(el => {
+    if (el.id === "id_publicado" || el.id === "id_interes_docente") return;
+    el.classList.add("form-check-input");
+  });
+
+  // ===== Helpers TomSelect =====
+  function clearTypedText(ts){
+    ts.setTextboxValue("");
+    ts.refreshOptions(false);
+  }
+
+  function initTsNoCreate(selector){
+    const el = document.querySelector(selector);
+    if (!el) return;
+    if (el.tomselect) el.tomselect.destroy();
+
+    new TomSelect(el, {
+      plugins: ["remove_button"],
+      create: false,
+      maxOptions: 500,
+      hideSelected: true,
+      closeAfterSelect: true,
+      onItemAdd() { clearTypedText(this); },
+    });
+  }
+
+  // ✅ Toggle visual: Publicado / Interés docente (no dependas del CSS +)
+  function bindToggle(id){
+    const cb = document.getElementById(id);
+    const label = document.querySelector(`label[for="${id}"]`);
+    if (!cb || !label) return;
+
+    const sync = () => label.classList.toggle("is-active", cb.checked);
+    cb.addEventListener("change", sync);
+    // por si el usuario clica el label:
+    label.addEventListener("click", () => setTimeout(sync, 0));
+    sync();
+  }
+
+bindToggle("id_publicado");
+bindToggle("id_interes_docente");
+
+  // ===== TomSelect (NO crear) =====
+  // Usa los IDs reales que Django te genera
+  initTsNoCreate("#id_secciones");
+  initTsNoCreate("#id_localizaciones");
+  initTsNoCreate("#id_patologias");
+
+  // ===== TomSelect (SÍ crear) SOLO shared_groups =====
+  const groupsEl = document.querySelector("#id_shared_groups");
+  if (groupsEl) {
+    if (groupsEl.tomselect) groupsEl.tomselect.destroy();
+
+    new TomSelect(groupsEl, {
+      plugins: ["remove_button"],
+      create: function(input, callback) {
+        const name = (input || "").trim();
+        if (!name) return callback();
+
+        fetch("{% url 'group_create_ajax' %}", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "X-CSRFToken": "{{ csrf_token }}",
+          },
+          body: new URLSearchParams({ name }),
+        })
+        .then(r => r.json().then(data => ({ ok: r.ok, data })))
+        .then(({ ok, data }) => {
+          if (!ok) throw new Error(data.error || "Error creando grupo");
+          callback({ value: String(data.id), text: data.name });
+        })
+        .catch(err => {
+          alert(err.message);
+          callback();
+        });
+      },
+      persist: false,
+      maxOptions: 500,
+      hideSelected: true,
+      closeAfterSelect: true,
+      onItemAdd() { clearTypedText(this); },
+    });
+  }
+
+  // ===== Mostrar/ocultar "Publicado en" =====
+  const publicadoCheckbox = document.querySelector("#id_publicado");
+  const publicadoEnWrap = document.querySelector("#publicado-en-wrap");
+
+  function togglePublicadoEn() {
+    if (!publicadoCheckbox || !publicadoEnWrap) return;
+    publicadoEnWrap.style.display = publicadoCheckbox.checked ? "block" : "none";
+  }
+
+  if (publicadoCheckbox) {
+    publicadoCheckbox.addEventListener("change", togglePublicadoEn);
+    togglePublicadoEn();
+  }
+
+  // ===== Acordeón de procedimientos (abrir/cerrar + contador) =====
+  const procGroups = document.querySelectorAll(".proc-group");
+
+  function updateCount(groupEl) {
+    const countEl = groupEl.querySelector(".proc-count");
+    const checked = groupEl.querySelectorAll('input[type="checkbox"]:checked').length;
+    if (countEl) countEl.textContent = checked > 0 ? `(${checked} seleccionados)` : "";
+  }
+
+  procGroups.forEach(groupEl => {
+    const header = groupEl.querySelector(".proc-header");
+    const body = groupEl.querySelector(".proc-body");
+    if (!header || !body) return;
+
+    updateCount(groupEl);
+
+    const hasChecked = groupEl.querySelector('input[type="checkbox"]:checked');
+    if (hasChecked) {
+      body.hidden = false;
+      header.setAttribute("aria-expanded", "true");
+    }
+
+    header.addEventListener("click", () => {
+      const expanded = header.getAttribute("aria-expanded") === "true";
+      header.setAttribute("aria-expanded", String(!expanded));
+      body.hidden = expanded;
+    });
+
+    groupEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
+      cb.addEventListener("change", () => updateCount(groupEl));
+    });
+  });
+
+});
+</script>
+
+
+{% endblock %}
+

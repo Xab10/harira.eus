@@ -1,0 +1,21 @@
+<h1>Grupos</h1>
+
+<div class="d-flex justify-content-end mb-3">
+  <a class="btn btn-primary" href="{% url 'group_create' %}">+ Crear nuevo Grupo</a>
+</div>
+
+<div class="row g-3">
+  {% for g in groups %}
+    <div class="col-md-4">
+      <a class="card text-decoration-none" href="{% url 'group_detail' g.id %}">
+        <div class="card-body">
+          <h5 class="card-title">{{ g.name }}</h5>
+          <span class="badge bg-secondary">{{ g.member_count }} miembros</span>
+          <span class="badge bg-dark">{{ g.case_count }} casos</span>
+        </div>
+      </a>
+    </div>
+  {% empty %}
+    <p>No tienes grupos todavía.</p>
+  {% endfor %}
+</div>

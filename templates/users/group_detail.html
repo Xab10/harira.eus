@@ -1,0 +1,28 @@
+<h1>{{ group.name }}</h1>
+
+<div class="mb-3">
+  <span class="badge bg-secondary">{{ member_count }} miembros</span>
+  <span class="badge bg-dark">{{ case_count }} casos</span>
+
+  {% if request.user.is_staff %}
+    <a class="btn btn-outline-secondary btn-sm ms-2" href="{% url 'group_members' group.id %}">
+      Gestionar miembros
+    </a>
+  {% endif %}
+</div>
+
+<h4>Casos</h4>
+<ul class="list-group">
+  {% for c in cases %}
+    <li class="list-group-item d-flex justify-content-between">
+      <span>{{ c.cic }} — {{ c.diagnostico_inicial|default:"(sin diagnóstico)" }}</span>
+      <a class="btn btn-sm btn-outline-primary" href="{% url 'case_edit' c.id %}">Ver</a>
+    </li>
+  {% empty %}
+    <li class="list-group-item">No hay casos en este grupo todavía.</li>
+  {% endfor %}
+</ul>
+
+<div class="d-flex justify-content-center mt-4">
+  <a class="btn btn-outline-secondary" href="{% url 'group_list' %}">Volver</a>
+</div>

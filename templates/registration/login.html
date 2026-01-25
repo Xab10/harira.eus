@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-sm-10 col-md-6 col-lg-4">
+    <div class="card">
+      <div class="card-body">
+        <h5 class="mb-3">Iniciar sesión</h5>
+
+        <form method="post">
+          {% csrf_token %}
+          {{ form.as_p }}
+
+          <button class="btn btn-success w-100" type="submit">Entrar</button>
+        </form>
+
+        <!-- Solo móvil: link a registrarse debajo -->
+        <div class="text-center mt-3">
+          <span class="text-muted">¿No tienes cuenta?</span>
+          <a href="{% url 'signup' %}" class="ms-1">Registrarse</a>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
