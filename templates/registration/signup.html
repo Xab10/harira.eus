@@ -32,6 +32,14 @@
             {% for e in form.email.errors %}<div class="text-danger small">{{ e }}</div>{% endfor %}
           </div>
 
+          <div class="mb-3">
+            {{ form.hospital_default.label_tag }}
+            {{ form.hospital_default }}
+            {% for e in form.hospital_default.errors %}
+              <div class="text-danger small">{{ e }}</div>
+            {% endfor %}
+          </div>
+
           <!-- Password 1 -->
           <div class="mb-3">
             <label class="form-label" for="{{ form.password1.id_for_label }}">Contraseña</label>
