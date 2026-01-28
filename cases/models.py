@@ -1,6 +1,8 @@
 from django.conf import settings
 from django.db import models
 from django.contrib.auth.models import Group
+import os
+from django.utils.text import slugify
 
 class Tag(models.Model):
     class Kind(models.TextChoices):
@@ -85,10 +87,26 @@ class Case(models.Model):
         related_name="shared_cases",
     )
 
+def case_media_path(instance, filename):
+    """
+    Guarda como: case_media/<case_id>/<titulo-o-nombre-original>.<ext>
+    """
+    base, ext = os.path.splitext(filename)
+
+    # Usa title si existe; si no, usa el nombre original del fichero
+    name = instance.title.strip() if getattr(instance, "title", "") else base
+    safe = slugify(name) or "archivo"
+
+    # Si aún no existe case_id (muy raro en inlineformset, pero por seguridad):
+    case_id = instance.case_id or "tmp"
+
+    return f"case_media/{case_id}/{safe}{ext.lower()}"
+
 class CaseMedia(models.Model):
     case = models.ForeignKey("Case", on_delete=models.CASCADE, related_name="media")
-    file = models.FileField(upload_to="case_media/", blank=True, null=True)
+    file = models.FileField(upload_to=case_media_path, blank=True, null=True)
     url = models.URLField(blank=True, null=True)
+    title = models.CharField("Nombre", max_length=120, blank=True)
     caption = models.CharField(max_length=120, blank=True, default="")
     created_at = models.DateTimeField(auto_now_add=True)
 

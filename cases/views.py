@@ -3,8 +3,9 @@ from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse
 from .models import Case, Tag
-from .forms import CaseForm, CaseMediaFormSet
+from .forms import CaseForm, CaseMediaFormSet, CaseMediaForm
 from django.urls import reverse
+from django.forms import inlineformset_factory
 
 def user_can_access_case(user, case) -> bool:
     if case.created_by_id == user.id:
@@ -130,58 +131,70 @@ def case_list(request):
 def case_create(request):
     if request.method == "POST":
         form = CaseForm(request.POST, user=request.user)
+        media_formset = CaseMediaFormSet(request.POST, request.FILES)  # <-- crea aquí
+
         if form.is_valid():
             case = form.save(commit=False)
             case.created_by = request.user
-            # case.user = request.user  # si lo tienes
             case.save()
-
-            # M2M “normales” del ModelForm
             form.save_m2m()
 
+            # Importantísimo: enlazar el formset al case ya guardado
             media_formset = CaseMediaFormSet(request.POST, request.FILES, instance=case)
             if media_formset.is_valid():
                 media_formset.save()
+            else:
+                # Si no es válido, NO rompas el flujo: re-render con errores
+                return render(request, "cases/case_form.html", {
+                    "form": form,
+                    "media_formset": media_formset,
+                    "mode": "new",
+                })
 
-            # shared_groups (custom): asigna + mete al usuario en los grupos (si eran nuevos)
-                groups = form.cleaned_data.get("shared_groups", [])
-                case.shared_groups.set(groups)
-                request.user.groups.add(*groups)
+            # shared_groups (SIEMPRE, independientemente de multimedia)
+            groups = form.cleaned_data.get("shared_groups", [])
+            case.shared_groups.set(groups)
+            request.user.groups.add(*groups)
 
-                return redirect("case_list")
-                
-        else:
-            media_formset = CaseMediaFormSet(request.POST, request.FILES)
+            return redirect("case_list")
 
-            
+        # si el form NO es válido, renderiza con el formset (como lo tenías)
+        media_formset = CaseMediaFormSet(request.POST, request.FILES)
+
     else:
         form = CaseForm(user=request.user)
         media_formset = CaseMediaFormSet()
 
-    
     return render(request, "cases/case_form.html", {
         "form": form,
         "media_formset": media_formset,
         "mode": "new",
     })
 
+
 @login_required
 def case_edit(request, pk):
     case = get_object_or_404(Case, pk=pk)
 
     if not user_can_access_case(request.user, case):
-            return redirect("case_list")
-    
+        return redirect("case_list")
+
     if request.method == "POST":
         form = CaseForm(request.POST, instance=case, user=request.user)
         media_formset = CaseMediaFormSet(request.POST, request.FILES, instance=case)
+
         if form.is_valid() and media_formset.is_valid():
-            case = form.save(commit=False)
-            case.save()
+            case = form.save()  # no hace falta commit=False aquí
+
+            # Guardar multimedia (esto faltaba)
+            media_formset.save()
+
+            # shared_groups
             case.shared_groups.set(form.cleaned_data.get("shared_groups", []))
-            for g in case.shared_groups.all():
-                request.user.groups.add(g)
+            request.user.groups.add(*case.shared_groups.all())
+
             return redirect("case_list")
+
     else:
         form = CaseForm(instance=case, user=request.user)
         media_formset = CaseMediaFormSet(instance=case)

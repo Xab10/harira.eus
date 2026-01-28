@@ -86,84 +86,93 @@
 
           {# ===================== MULTIMEDIA ===================== #}
           <div class="col-12">
-            <div class="section-header mt-2">
-              <span>Multimedia</span>
-            </div>
+            <div class="section-header mt-2"><span>Multimedia</span></div>
 
-            <div id="media-formset">
-              {{ media_formset.management_form }}
+            {{ media_formset.management_form }}
 
-              {% for f in media_formset %}
+            <div id="media-forms">
+              {% for f in media_formset.forms %}
                 <div class="card p-3 mb-2 media-row">
                   <div class="row g-2 align-items-end">
-                    <div class="col-md-6">
-                      {{ f.file.label_tag }}
-                      {{ f.file }}
-                    </div>
 
                     <div class="col-md-4">
-                      {{ f.url.label_tag }}
-                      {{ f.url }}
+                      {{ f.title.label_tag }}
+                      {{ f.title }}
+                      {{ f.title.errors }}
                     </div>
 
-                    <div class="col-md-2">
-                      {% if f.instance.pk %}
-                        <div class="form-check">
-                          {{ f.DELETE }}
-                          <label class="form-check-label" for="{{ f.DELETE.id_for_label }}">Eliminar</label>
+                    <div class="col-md-6">
+                      {{ f.file.label_tag }}
+                      {% if f.instance.pk and f.instance.file %}
+                        <div class="d-flex align-items-center gap-2 mb-2">
+                          <a href="{{ f.instance.file.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">Ver</a>
+                          <small class="text-muted">{{ f.instance.title|default:f.instance.file.name }}</small>
                         </div>
+                      {% endif %}
+                      {{ f.file }}
+                      {{ f.file.errors }}
+                    </div>
+
+                    <div class="col-md-2 d-grid">
+                      {% if f.instance.pk %}
+                        {{ f.DELETE }}
+                        <label class="btn btn-outline-danger btn-sm" for="{{ f.DELETE.id_for_label }}">Eliminar</label>
                       {% else %}
-                        <button type="button" class="btn btn-outline-danger w-100 js-remove-media">Quitar</button>
+                        <button type="button" class="btn btn-outline-danger btn-sm js-remove-media">Quitar</button>
                       {% endif %}
                     </div>
 
                     <div class="col-12">
                       {{ f.note.label_tag }}
                       {{ f.note }}
+                      {{ f.note.errors }}
                     </div>
+
                   </div>
 
-                  {# id oculto del inline formset #}
                   {{ f.id }}
                 </div>
               {% endfor %}
+
             </div>
 
-            <button type="button" class="btn btn-outline-primary mt-2" id="addMediaRow">
-              + Añadir multimedia
-            </button>
+            <button type="button" class="btn btn-outline-primary mt-2" id="addMediaRow">+ Añadir multimedia</button>
 
             <template id="media-empty-form">
               <div class="card p-3 mb-2 media-row">
                 <div class="row g-2 align-items-end">
+
+                  <div class="col-md-4">
+                    {{ media_formset.empty_form.title.label_tag }}
+                    {{ media_formset.empty_form.title }}
+                  </div>
+
                   <div class="col-md-6">
                     {{ media_formset.empty_form.file.label_tag }}
                     {{ media_formset.empty_form.file }}
                   </div>
 
-                  <div class="col-md-4">
-                    {{ media_formset.empty_form.url.label_tag }}
-                    {{ media_formset.empty_form.url }}
-                  </div>
-
-                  <div class="col-md-2">
-                    <button type="button" class="btn btn-outline-danger w-100 js-remove-media">Quitar</button>
+                  <div class="col-md-2 d-grid">
+                    <button type="button" class="btn btn-outline-danger btn-sm js-remove-media">Quitar</button>
                   </div>
 
                   <div class="col-12">
                     {{ media_formset.empty_form.note.label_tag }}
                     {{ media_formset.empty_form.note }}
                   </div>
-                </div>
 
+                </div>
                 {{ media_formset.empty_form.id }}
               </div>
             </template>
-          </div>
-          {# =================== /MULTIMEDIA =================== #}
 
-  
-            <div class="col-md-4 d-flex align-items-end gap-4 mt-4">
+
+
+          </div>
+
+          {# =================== /MULTIMEDIA =================== #}
+ 
+          <div class="col-md-4 d-flex align-items-end gap-4 mt-4">
 
             <!-- PUBLICADO -->
             <div class="toggle-icon">
@@ -215,109 +224,107 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-
+  // --- CIC check (lo tuyo) ---
   const cicInput = document.getElementById("id_cic");
   const cicWarning = document.getElementById("cicWarning");
   const cicEditLink = document.getElementById("cicEditLink");
-  const addBtn = document.getElementById("add-media");
-  const list = document.getElementById("media-forms");
-  const tpl = document.getElementById("media-empty-form");
-  const totalForms = document.querySelector("#id_media_set-TOTAL_FORMS");
-  const container = document.getElementById("media-formset");
   let cicTimer = null;
 
   function setCicWarning({ show, editUrl }){
     if (!cicWarning) return;
     cicWarning.style.display = show ? "block" : "none";
-
     if (cicEditLink) {
-      if (show && editUrl) {
-        cicEditLink.href = editUrl;
-        cicEditLink.style.display = "inline";
-      } else {
-        cicEditLink.href = "#";
-        cicEditLink.style.display = "none";
-      }
+      cicEditLink.href = show && editUrl ? editUrl : "#";
+      cicEditLink.style.display = show && editUrl ? "inline" : "none";
     }
   }
-
-  function wireRemove(container){
-    container.querySelectorAll(".remove-media").forEach(btn => {
-      btn.addEventListener("click", () => btn.closest(".card").remove());
-    });
-  }
-
-  wireRemove(document);
-
-  addBtn?.addEventListener("click", () => {
-    const idx = parseInt(totalForms.value, 10);
-    const html = tpl.innerHTML.replaceAll("__prefix__", idx);
-    const wrapper = document.createElement("div");
-    wrapper.innerHTML = html.trim();
-    const node = wrapper.firstElementChild;
-
-    list.appendChild(node);
-    totalForms.value = idx + 1;
-
-    wireRemove(node);
-  });
 
   if (cicInput) {
     cicInput.addEventListener("input", () => {
       clearTimeout(cicTimer);
       const cic = cicInput.value.trim();
-
-      if (!cic) {
-        setCicWarning({ show: false });
-        return;
-      }
-
+      if (!cic) { setCicWarning({ show:false }); return; }
       cicTimer = setTimeout(() => {
         const pk = "{{ form.instance.pk|default:'' }}";
         fetch(`{% url 'cic_exists' %}?cic=${encodeURIComponent(cic)}&pk=${encodeURIComponent(pk)}`)
           .then(r => r.json())
-          .then(data => {
-            setCicWarning({
-              show: !!data.exists,
-              editUrl: data.edit_url || null
-            });
-          })
+          .then(data => setCicWarning({ show: !!data.exists, editUrl: data.edit_url || null }))
           .catch(() => setCicWarning({ show: false }));
       }, 350);
     });
   }
 
+  // --- Formset multimedia: selectores robustos ---
+  const addBtn = document.getElementById("addMediaRow");          // coincide con template
+  const formsContainer = document.getElementById("media-forms"); // coincide con template
+  const tpl = document.getElementById("media-empty-form");       // coincide con template
+  const totalFormsInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
 
-  // ===== Bootstrap rápido para inputs (sin tocar TomSelect) =====
-  document.querySelectorAll("input[type=text], input[type=date], select, textarea").forEach(el => {
-    if (el.tagName === "SELECT") {
-      // Si NO es TomSelect, lo dejamos como select Bootstrap
-      if (!el.classList.contains("ts-select") && !["id_secciones","id_localizaciones","id_patologias","id_shared_groups"].includes(el.id)) {
-        el.classList.add("form-select");
+  if (formsContainer && tpl && totalFormsInput) {
+    // delegación para quitar (soporta tanto botones nuevos como existentes)
+    formsContainer.addEventListener("click", (e) => {
+      const btn = e.target.closest(".js-remove-media");
+      if (!btn) return;
+
+      const row = btn.closest(".media-row");
+      if (!row) return;
+
+      // si la fila tiene un input DELETE (fila existente), márcalo y oculta
+      const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+      if (deleteCheckbox) {
+        deleteCheckbox.checked = true;
+        row.style.display = "none";
+        return;
       }
+
+      // sino, es una fila nueva: la eliminamos del DOM y reducimos TOTAL_FORMS
+      row.remove();
+      // ajustar total_forms: sólo si el template era la última
+      const current = parseInt(totalFormsInput.value, 10);
+      totalFormsInput.value = String(Math.max(0, current - 1));
+      return;
+    });
+
+    // añadir nueva fila
+    addBtn?.addEventListener("click", () => {
+      const idx = parseInt(totalFormsInput.value, 10);
+      // clonar template (preserva inputs correctamente)
+      const clone = tpl.content.cloneNode(true);
+      // remplazar __prefix__ en name/id/for
+      clone.querySelectorAll("[name],[id],[for]").forEach(el => {
+        if (el.name) el.name = el.name.replace(/__prefix__/g, idx);
+        if (el.id) el.id = el.id.replace(/__prefix__/g, idx);
+        if (el.getAttribute("for")) el.setAttribute("for", el.getAttribute("for").replace(/__prefix__/g, idx));
+      });
+      // append
+      formsContainer.appendChild(clone);
+      totalFormsInput.value = String(idx + 1);
+    });
+  }
+
+  // --- Bootstrap quick: evitar añadir form-control a selects que van a TomSelect ---
+  document.querySelectorAll("input[type=text], input[type=date], textarea, select").forEach(el => {
+    if (el.tagName === "SELECT") {
+      // si ya está diseñado para TomSelect (clase tomselect) no tocar
+      if (el.classList.contains("tomselect")) return;
+      // si es el select de procedimientos (hecho a mano) o shared no tocar si quieres
+      el.classList.add("form-select");
       return;
     }
     if (!el.classList.contains("form-check-input")) el.classList.add("form-control");
   });
 
-
-  // Checkboxes normales
+  // checkboxes
   document.querySelectorAll("input[type=checkbox]").forEach(el => {
-    if (el.id === "id_publicado" || el.id === "id_interes_docente") return;
+    if (["id_publicado","id_interes_docente"].includes(el.id)) return;
     el.classList.add("form-check-input");
   });
 
-  // ===== Helpers TomSelect =====
-  function clearTypedText(ts){
-    ts.setTextboxValue("");
-    ts.refreshOptions(false);
-  }
+  // --- TomSelect inits: usar .tomselect para identificarlos ---
+  function clearTypedText(ts){ ts.setTextboxValue(""); ts.refreshOptions(false); }
 
-  function initTsNoCreate(selector){
-    const el = document.querySelector(selector);
-    if (!el) return;
+  document.querySelectorAll("select.tomselect").forEach(el => {
     if (el.tomselect) el.tomselect.destroy();
-
     new TomSelect(el, {
       plugins: ["remove_button"],
       create: false,
@@ -326,45 +333,21 @@ document.addEventListener("DOMContentLoaded", () => {
       closeAfterSelect: true,
       onItemAdd() { clearTypedText(this); },
     });
-  }
+  });
 
-  // ✅ Toggle visual: Publicado / Interés docente (no dependas del CSS +)
-  function bindToggle(id){
-    const cb = document.getElementById(id);
-    const label = document.querySelector(`label[for="${id}"]`);
-    if (!cb || !label) return;
-
-    const sync = () => label.classList.toggle("is-active", cb.checked);
-    cb.addEventListener("change", sync);
-    // por si el usuario clica el label:
-    label.addEventListener("click", () => setTimeout(sync, 0));
-    sync();
-  }
-
-bindToggle("id_publicado");
-bindToggle("id_interes_docente");
-
-  // ===== TomSelect (NO crear) =====
-  // Usa los IDs reales que Django te genera
-  initTsNoCreate("#id_secciones");
-  initTsNoCreate("#id_localizaciones");
-  initTsNoCreate("#id_patologias");
-
-  // ===== TomSelect (SÍ crear) SOLO shared_groups =====
+  // shared_groups: permitir crear (si existe)
   const groupsEl = document.querySelector("#id_shared_groups");
   if (groupsEl) {
     if (groupsEl.tomselect) groupsEl.tomselect.destroy();
-
     new TomSelect(groupsEl, {
       plugins: ["remove_button"],
       create: function(input, callback) {
-        const name = (input || "").trim();
+        const name = (input||"").trim();
         if (!name) return callback();
-
         fetch("{% url 'group_create_ajax' %}", {
           method: "POST",
           headers: {
-            "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+            "Content-Type":"application/x-www-form-urlencoded; charset=UTF-8",
             "X-CSRFToken": "{{ csrf_token }}",
           },
           body: new URLSearchParams({ name }),
@@ -374,10 +357,7 @@ bindToggle("id_interes_docente");
           if (!ok) throw new Error(data.error || "Error creando grupo");
           callback({ value: String(data.id), text: data.name });
         })
-        .catch(err => {
-          alert(err.message);
-          callback();
-        });
+        .catch(err => { alert(err.message); callback(); });
       },
       persist: false,
       maxOptions: 500,
@@ -387,9 +367,21 @@ bindToggle("id_interes_docente");
     });
   }
 
-  // ===== Mostrar/ocultar "Publicado en" =====
-  const publicadoCheckbox = document.querySelector("#id_publicado");
-  const publicadoEnWrap = document.querySelector("#publicado-en-wrap");
+  // toggle simple: publicado / interes docente
+  function bindToggle(id){
+    const cb = document.getElementById(id);
+    const label = document.querySelector(`label[for="${id}"]`);
+    if (!cb || !label) return;
+    const sync = () => label.classList.toggle("is-active", cb.checked);
+    cb.addEventListener("change", sync);
+    label.addEventListener("click", () => setTimeout(sync, 0));
+    sync();
+  }
+  bindToggle("id_publicado");
+  bindToggle("id_interes_docente");
+
+  const publicadoCheckbox = document.getElementById("id_publicado");
+  const publicadoEnWrap = document.getElementById("publicado-en-wrap");
 
   function togglePublicadoEn() {
     if (!publicadoCheckbox || !publicadoEnWrap) return;
@@ -398,40 +390,31 @@ bindToggle("id_interes_docente");
 
   if (publicadoCheckbox) {
     publicadoCheckbox.addEventListener("change", togglePublicadoEn);
+    const publicadoLabel = document.querySelector('label[for="id_publicado"]');
+    publicadoLabel?.addEventListener("click", () => setTimeout(togglePublicadoEn, 0));
     togglePublicadoEn();
   }
 
-  // ===== Acordeón de procedimientos (abrir/cerrar + contador) =====
+  // acordeón procedimientos (igual que antes)
   const procGroups = document.querySelectorAll(".proc-group");
-
   function updateCount(groupEl) {
     const countEl = groupEl.querySelector(".proc-count");
     const checked = groupEl.querySelectorAll('input[type="checkbox"]:checked').length;
     if (countEl) countEl.textContent = checked > 0 ? `(${checked} seleccionados)` : "";
   }
-
   procGroups.forEach(groupEl => {
     const header = groupEl.querySelector(".proc-header");
     const body = groupEl.querySelector(".proc-body");
     if (!header || !body) return;
-
     updateCount(groupEl);
-
     const hasChecked = groupEl.querySelector('input[type="checkbox"]:checked');
-    if (hasChecked) {
-      body.hidden = false;
-      header.setAttribute("aria-expanded", "true");
-    }
-
+    if (hasChecked) { body.hidden = false; header.setAttribute("aria-expanded","true"); }
     header.addEventListener("click", () => {
       const expanded = header.getAttribute("aria-expanded") === "true";
       header.setAttribute("aria-expanded", String(!expanded));
       body.hidden = expanded;
     });
-
-    groupEl.querySelectorAll('input[type="checkbox"]').forEach(cb => {
-      cb.addEventListener("change", () => updateCount(groupEl));
-    });
+    groupEl.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener("change", () => updateCount(groupEl)));
   });
 
 });

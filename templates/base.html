@@ -216,9 +216,44 @@
       color: #198754 !important;
     }
 
+    .ts-wrapper { width: 100%; }
+    .ts-control {
+      min-height: calc(2.25rem + 2px);
+      padding: .375rem .75rem;
+      border-radius: .375rem;
+    }
+    .ts-dropdown { z-index: 2000 !important; }
+
+    #publicado-en-wrap {
+      display: none;
+    }
+
+
+    /* Multimedia: tarjetas más limpias */
+    .media-row {
+      border: 1px solid rgba(0,0,0,.08);
+      border-radius: 12px;
+    }
+
+    /* Esconde el checkbox DELETE pero deja el label-botón funcionando */
+    .media-row input[type="checkbox"][name$="-DELETE"]{
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    /* (Opcional) Ajuste de inputs dentro de multimedia */
+    .media-row input[type="text"],
+    .media-row input[type="url"],
+    .media-row input[type="file"],
+    .media-row textarea {
+      border-radius: 10px;
+    }
   </style>
 
   {% block extra_head %}{% endblock %}
+
+
 </head>
 
 <body>

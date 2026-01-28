@@ -1,0 +1,6 @@
+<input
+  type="file"
+  name="{{ widget.name }}"
+  {% if widget.value %} data-has-file="1"{% endif %}
+  {% include "django/forms/widgets/attrs.html" %}
+>

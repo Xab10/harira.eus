@@ -23,9 +23,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = 'django-insecure-++jghoknqr5_s%1dq0$io9p8p2za1+-c97s+u_bzmifz&91+az'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = ["127.0.0.1", "localhost", "192.168.1.134", "*", "hariraweb-99110949537.europe-west1.run.app"]
+ALLOWED_HOSTS = ["127.0.0.1", "localhost", "192.168.1.134", "*", "hariraweb-99110949537.europe-west1.run.app", "harira.eus", "www.harira.eus"]
 
 
 # Application definition
@@ -137,7 +137,12 @@ LOGOUT_REDIRECT_URL = "/accounts/login/"
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
 
-CSRF_TRUSTED_ORIGINS = ["https://conditioning-dictionaries-prior-estimates.trycloudflare.com", "https://hariraweb-99110949537.europe-west1.run.app"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://conditioning-dictionaries-prior-estimates.trycloudflare.com", 
+    "https://hariraweb-99110949537.europe-west1.run.app"
+    "https://harira.eus",
+    "https://www.harira.eus",
+    ]
 
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
 CSRF_COOKIE_SECURE = True

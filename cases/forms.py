@@ -4,6 +4,7 @@ from .models import Case, CaseMedia
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 from django.forms import inlineformset_factory
+from .widgets import PrettyFileInput
 
 IMAGING_CHOICES = [
     ("Ecografia", "Ecografía"),
@@ -257,9 +258,9 @@ class CaseForm(forms.ModelForm):
             "fecha": forms.DateInput(attrs={"type": "date"}),
             "diagnostico_inicial": forms.Textarea(attrs={"rows": 2}),
             "comentarios": forms.Textarea(attrs={"rows": 2}),
-            "secciones": forms.SelectMultiple(attrs={"class": "ts-select", "placeholder": "Escribe para buscar..."}),
-            "localizaciones": forms.SelectMultiple(attrs={"class": "ts-select", "placeholder": "Escribe para buscar..."}),
-            "patologias": forms.SelectMultiple(attrs={"class": "ts-select", "placeholder": "Escribe para buscar..."}),
+            "secciones": forms.SelectMultiple(attrs={"class": "form-select tomselect", "placeholder": "Escribe para buscar..."}),
+            "localizaciones": forms.SelectMultiple(attrs={"class": "form-select tomselect", "placeholder": "Escribe para buscar..."}),
+            "patologias": forms.SelectMultiple(attrs={"class": "form-select tomselect", "placeholder": "Escribe para buscar..."}),
             "publicado_en": forms.TextInput(attrs={"placeholder": "Tipo de publicación, lugar y fecha"}),
         }
 
@@ -269,10 +270,11 @@ class CaseMediaForm(forms.ModelForm):
         fields = ["caption", "url", "file"]
         widgets = {
             "caption": forms.TextInput(attrs={"class": "form-control", "placeholder": "Descripción (opcional)"}),
-            "url": forms.URLInput(attrs={"class": "form-control", "placeholder": "URL (Drive/Dropbox/...)"}),
             "file": forms.ClearableFileInput(attrs={
                 "class": "form-control",
-                "accept": "image/*,video/*"
+                "accept": "image/*,video/*",
+            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej: TAC preoperatorio"}),
+            "note": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
             }),
         }
 
