@@ -27,6 +27,7 @@ DEBUG = True
 
 ALLOWED_HOSTS = ["127.0.0.1", "localhost", "192.168.1.134", "*", "hariraweb-99110949537.europe-west1.run.app", "harira.eus", "www.harira.eus"]
 
+GS_BUCKET_NAME = "hariraweb-media-99110949537"
 
 # Application definition
 

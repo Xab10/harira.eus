@@ -267,14 +267,12 @@ class CaseForm(forms.ModelForm):
 class CaseMediaForm(forms.ModelForm):
     class Meta:
         model = CaseMedia
-        fields = ["caption", "url", "file"]
+        fields = ["file", "caption"]
         widgets = {
-            "caption": forms.TextInput(attrs={"class": "form-control", "placeholder": "Descripción (opcional)"}),
+            "caption": forms.TextInput(attrs={"class": "form-control", "placeholder": "Título"}),
             "file": forms.ClearableFileInput(attrs={
                 "class": "form-control",
-                "accept": "image/*,video/*",
-            "title": forms.TextInput(attrs={"class": "form-control", "placeholder": "Ej: TAC preoperatorio"}),
-            "note": forms.Textarea(attrs={"class": "form-control", "rows": 2}),
+                "accept": "image/*,video/*"
             }),
         }
 

@@ -34,7 +34,23 @@ class SignupForm(UserCreationForm):
 
     def save(self, commit=True):
         user = super().save(commit=False)
-        user.email = self.cleaned_data["email"].strip().lower()
+
+        # obtener valores de forma segura (evita None.strip())
+        email = (self.cleaned_data.get("email") or "").strip().lower()
+        first_name = (self.cleaned_data.get("first_name") or "").strip()
+        last_name = (self.cleaned_data.get("last_name") or "").strip()
+        hospital = (self.cleaned_data.get("hospital") or "").strip()  # <- ejemplo
+
+        # asignaciones al modelo
+        user.email = email or user.email
+        user.first_name = first_name
+        user.last_name = last_name
+
+        # cualquier campo extra en tu modelo
+        if hasattr(user, "hospital"):
+            user.hospital = hospital
+
         if commit:
             user.save()
+            # si tienes ManyToMany u otras relaciones: form.save_m2m()
         return user

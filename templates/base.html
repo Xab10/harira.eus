@@ -249,6 +249,15 @@
     .media-row textarea {
       border-radius: 10px;
     }
+
+    /* oculta checkbox DELETE del formset */
+    input[type="checkbox"][name$="-DELETE"] { display: none; }
+
+    /* hace que las filas tengan separación consistente */
+    #media-formset .media-row { border-radius: 12px; }
+
+    /* evita “saltos raros” por labels largos */
+    #media-formset label { font-weight: 600; }
   </style>
 
   {% block extra_head %}{% endblock %}

@@ -85,90 +85,98 @@
           </div>
 
           {# ===================== MULTIMEDIA ===================== #}
-          <div class="col-12">
-            <div class="section-header mt-2"><span>Multimedia</span></div>
+          <div class="section-header mt-2"><span>Multimedia</span></div>
 
+          <div id="media-formset">
             {{ media_formset.management_form }}
 
             <div id="media-forms">
-              {% for f in media_formset.forms %}
+              {% for f in media_formset %}
                 <div class="card p-3 mb-2 media-row">
                   <div class="row g-2 align-items-end">
 
+                    {# EXISTENTE: no mostramos input file (así no sale “Change”) #}
+                    {% if f.instance.pk %}
+                      <div class="col-md-6">
+                        <label class="form-label">Archivo</label>
+
+                            <div class="d-flex gap-2">
+                              <input class="form-control" value="{{ f.instance.file.name }}" readonly>
+
+                              {% if f.instance.file %}
+                                {# si ya tienes una vista privada tipo /media/<path> usa esa #}
+                                <a class="btn btn-outline-secondary"
+                                  href="{% url 'private_media' f.instance.file.name %}"
+                                  target="_blank" rel="noopener">
+                                  Ver
+                                </a>
+                              {% endif %}
+                            </div>
+                          </div>
+                        {% else %}
+
+                      <div class="col-md-6">
+                        {{ f.file.label_tag }}
+                        {{ f.file }}
+                      </div>
+                    {% endif %}
+
                     <div class="col-md-4">
-                      {{ f.title.label_tag }}
-                      {{ f.title }}
-                      {{ f.title.errors }}
+                      {{ f.caption.label_tag }}
+                      {{ f.caption }}
                     </div>
 
-                    <div class="col-md-6">
-                      {{ f.file.label_tag }}
-                      {% if f.instance.pk and f.instance.file %}
-                        <div class="d-flex align-items-center gap-2 mb-2">
-                          <a href="{{ f.instance.file.url }}" target="_blank" class="btn btn-outline-secondary btn-sm">Ver</a>
-                          <small class="text-muted">{{ f.instance.title|default:f.instance.file.name }}</small>
-                        </div>
-                      {% endif %}
-                      {{ f.file }}
-                      {{ f.file.errors }}
-                    </div>
-
-                    <div class="col-md-2 d-grid">
+                    <div class="col-md-2">
                       {% if f.instance.pk %}
-                        {{ f.DELETE }}
-                        <label class="btn btn-outline-danger btn-sm" for="{{ f.DELETE.id_for_label }}">Eliminar</label>
+                        {# botón que marca DELETE #}
+                        <button type="button" class="btn btn-outline-danger w-100 js-delete-existing">
+                          Eliminar
+                        </button>
+                        <div class="d-none">
+                          {{ f.DELETE }}
+                        </div>
                       {% else %}
-                        <button type="button" class="btn btn-outline-danger btn-sm js-remove-media">Quitar</button>
+                        <button type="button" class="btn btn-outline-danger w-100 js-remove-media">
+                          Quitar
+                        </button>
                       {% endif %}
                     </div>
 
-                    <div class="col-12">
-                      {{ f.note.label_tag }}
-                      {{ f.note }}
-                      {{ f.note.errors }}
-                    </div>
-
+                    {{ f.id }}
                   </div>
-
-                  {{ f.id }}
                 </div>
               {% endfor %}
-
             </div>
+          </div>
 
-            <button type="button" class="btn btn-outline-primary mt-2" id="addMediaRow">+ Añadir multimedia</button>
+          <button type="button" class="btn btn-outline-primary mt-2" id="addMediaRow">
+            + Añadir multimedia
+          </button>
 
-            <template id="media-empty-form">
-              <div class="card p-3 mb-2 media-row">
-                <div class="row g-2 align-items-end">
-
-                  <div class="col-md-4">
-                    {{ media_formset.empty_form.title.label_tag }}
-                    {{ media_formset.empty_form.title }}
-                  </div>
-
-                  <div class="col-md-6">
-                    {{ media_formset.empty_form.file.label_tag }}
-                    {{ media_formset.empty_form.file }}
-                  </div>
-
-                  <div class="col-md-2 d-grid">
-                    <button type="button" class="btn btn-outline-danger btn-sm js-remove-media">Quitar</button>
-                  </div>
-
-                  <div class="col-12">
-                    {{ media_formset.empty_form.note.label_tag }}
-                    {{ media_formset.empty_form.note }}
-                  </div>
-
+          <template id="media-empty-form">
+            <div class="card p-3 mb-2 media-row">
+              <div class="row g-2 align-items-end">
+                <div class="col-md-6">
+                  {{ media_formset.empty_form.file.label_tag }}
+                  {{ media_formset.empty_form.file }}
                 </div>
+
+                <div class="col-md-4">
+                  {{ media_formset.empty_form.caption.label_tag }}
+                  {{ media_formset.empty_form.caption }}
+                </div>
+
+                <div class="col-md-2">
+                  <button type="button" class="btn btn-outline-danger w-100 js-remove-media">
+                    Quitar
+                  </button>
+                </div>
+
                 {{ media_formset.empty_form.id }}
               </div>
-            </template>
+            </div>
+          </template>
 
-
-
-          </div>
 
           {# =================== /MULTIMEDIA =================== #}
  
@@ -224,7 +232,8 @@
 
 <script>
 document.addEventListener("DOMContentLoaded", () => {
-  // --- CIC check (lo tuyo) ---
+
+  // ===================== CIC check =====================
   const cicInput = document.getElementById("id_cic");
   const cicWarning = document.getElementById("cicWarning");
   const cicEditLink = document.getElementById("cicEditLink");
@@ -254,73 +263,186 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // --- Formset multimedia: selectores robustos ---
-  const addBtn = document.getElementById("addMediaRow");          // coincide con template
-  const formsContainer = document.getElementById("media-forms"); // coincide con template
-  const tpl = document.getElementById("media-empty-form");       // coincide con template
+  // ===================== MULTIMEDIA formset =====================
+  const addBtn = document.getElementById("addMediaRow");
+  const formsContainer = document.getElementById("media-forms");
+  const tpl = document.getElementById("media-empty-form");
   const totalFormsInput = document.querySelector('input[name$="-TOTAL_FORMS"]');
 
-  if (formsContainer && tpl && totalFormsInput) {
-    // delegación para quitar (soporta tanto botones nuevos como existentes)
-    formsContainer.addEventListener("click", (e) => {
-      const btn = e.target.closest(".js-remove-media");
-      if (!btn) return;
+  function reindexMediaForms() {
+    // Solo reindexamos los forms "nuevos" (los que no tienen instance.pk),
+    // pero como en HTML no distinguimos fácil, lo hacemos general:
+    const rows = formsContainer.querySelectorAll(".media-row");
+    let i = 0;
 
-      const row = btn.closest(".media-row");
-      if (!row) return;
+    rows.forEach(row => {
+      // Si es una fila existente (tiene checkbox DELETE oculto o input readonly del archivo), NO reindexar
+      const hasDelete = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+      const hasReadonlyFile = row.querySelector('input[readonly][value^="case_media/"], input[readonly][value*="/"]');
 
-      // si la fila tiene un input DELETE (fila existente), márcalo y oculta
-      const deleteCheckbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
-      if (deleteCheckbox) {
-        deleteCheckbox.checked = true;
-        row.style.display = "none";
+      if (hasDelete || hasReadonlyFile) {
         return;
       }
 
-      // sino, es una fila nueva: la eliminamos del DOM y reducimos TOTAL_FORMS
-      row.remove();
-      // ajustar total_forms: sólo si el template era la última
-      const current = parseInt(totalFormsInput.value, 10);
-      totalFormsInput.value = String(Math.max(0, current - 1));
-      return;
+      // Reindexar names/ids/for de esta fila al índice "i"
+      row.querySelectorAll("[name]").forEach(el => {
+        el.name = el.name.replace(/-\d+-/g, `-${i}-`).replace(/-__prefix__-/g, `-${i}-`);
+      });
+      row.querySelectorAll("[id]").forEach(el => {
+        el.id = el.id.replace(/-\d+-/g, `-${i}-`).replace(/-__prefix__-/g, `-${i}-`);
+      });
+      row.querySelectorAll("label[for]").forEach(el => {
+        el.setAttribute("for", el.getAttribute("for").replace(/-\d+-/g, `-${i}-`).replace(/-__prefix__-/g, `-${i}-`));
+      });
+
+      i += 1;
     });
 
-    // añadir nueva fila
-    addBtn?.addEventListener("click", () => {
-      const idx = parseInt(totalFormsInput.value, 10);
-      // clonar template (preserva inputs correctamente)
-      const clone = tpl.content.cloneNode(true);
-      // remplazar __prefix__ en name/id/for
-      clone.querySelectorAll("[name],[id],[for]").forEach(el => {
-        if (el.name) el.name = el.name.replace(/__prefix__/g, idx);
-        if (el.id) el.id = el.id.replace(/__prefix__/g, idx);
-        if (el.getAttribute("for")) el.setAttribute("for", el.getAttribute("for").replace(/__prefix__/g, idx));
-      });
-      // append
-      formsContainer.appendChild(clone);
-      totalFormsInput.value = String(idx + 1);
+    // TOTAL_FORMS debe ser: existentes (incluidas ocultas con DELETE) + nuevas
+    // Django espera TOTAL_FORMS contando TODOS los forms del formset.
+    // Como no tocamos existentes, mantenemos TOTAL_FORMS como:
+    // número de filas renderizadas originalmente (incluye existentes) + nuevas actuales.
+    // La forma segura: contar inputs con name que termina en "-id" (cada form tiene uno).
+    const total = document.querySelectorAll('input[name$="-id"]').length;
+    totalFormsInput.value = String(total);
+
+      // ===================== Preview de archivos (nuevos) =====================
+  function ensurePreviewEl(row) {
+    let preview = row.querySelector(".js-media-preview");
+    if (!preview) {
+      preview = document.createElement("div");
+      preview.className = "js-media-preview mt-2";
+      row.appendChild(preview);
+    }
+    return preview;
+  }
+
+  function renderPreview(file, previewEl) {
+    previewEl.innerHTML = "";
+    if (!file) return;
+
+    const type = file.type || "";
+
+    if (type.startsWith("image/")) {
+      const img = document.createElement("img");
+      img.style.maxWidth = "220px";
+      img.style.maxHeight = "140px";
+      img.style.borderRadius = "8px";
+      img.style.display = "block";
+      img.style.border = "1px solid #eee";
+      img.style.padding = "4px";
+
+      const url = URL.createObjectURL(file);
+      img.src = url;
+      img.onload = () => URL.revokeObjectURL(url);
+
+      previewEl.appendChild(img);
+      return;
+    }
+
+    if (type.startsWith("video/")) {
+      const video = document.createElement("video");
+      video.controls = true;
+      video.style.maxWidth = "260px";
+      video.style.maxHeight = "160px";
+      video.style.display = "block";
+
+      const url = URL.createObjectURL(file);
+      video.src = url;
+      video.onloadeddata = () => URL.revokeObjectURL(url);
+
+      previewEl.appendChild(video);
+      return;
+    }
+
+    // fallback
+    const p = document.createElement("div");
+    p.className = "text-muted small";
+    p.textContent = `Archivo seleccionado: ${file.name}`;
+    previewEl.appendChild(p);
+  }
+
+  // Delegación: cuando cambie cualquier input file dentro del formset
+  const mediaRoot = document.getElementById("media-formset");
+  if (mediaRoot) {
+    mediaRoot.addEventListener("change", (e) => {
+      const input = e.target;
+      if (!input || input.type !== "file") return;
+
+      const row = input.closest(".media-row");
+      if (!row) return;
+
+      const previewEl = ensurePreviewEl(row);
+      renderPreview(input.files && input.files[0], previewEl);
     });
   }
 
-  // --- Bootstrap quick: evitar añadir form-control a selects que van a TomSelect ---
+  }
+
+  if (addBtn && formsContainer && tpl && totalFormsInput) {
+
+    // Delegación para Quitar/Eliminar
+    formsContainer.addEventListener("click", (e) => {
+      // Quitar fila NUEVA
+      const removeBtn = e.target.closest(".js-remove-media");
+      if (removeBtn) {
+        const row = removeBtn.closest(".media-row");
+        if (row) row.remove();
+        reindexMediaForms();
+        return;
+      }
+
+      // Eliminar fila EXISTENTE -> marca DELETE y oculta
+      const delBtn = e.target.closest(".js-delete-existing");
+      if (delBtn) {
+        const row = delBtn.closest(".media-row");
+        const delCheckbox = row?.querySelector('input[type="checkbox"][name$="-DELETE"]');
+        if (delCheckbox) {
+          delCheckbox.checked = true;
+          row.style.display = "none";
+        }
+        return;
+      }
+    });
+
+    // Añadir nueva fila
+    addBtn.addEventListener("click", () => {
+      const idx = parseInt(totalFormsInput.value, 10);
+
+      const clone = tpl.content.cloneNode(true);
+      clone.querySelectorAll("[name],[id],label[for]").forEach(el => {
+        if (el.name) el.name = el.name.replace(/__prefix__/g, idx);
+        if (el.id) el.id = el.id.replace(/__prefix__/g, idx);
+        if (el.getAttribute && el.getAttribute("for")) {
+          el.setAttribute("for", el.getAttribute("for").replace(/__prefix__/g, idx));
+        }
+      });
+
+      formsContainer.appendChild(clone);
+      // actualiza TOTAL_FORMS correctamente
+      const total = document.querySelectorAll('input[name$="-id"]').length;
+      totalFormsInput.value = String(total);
+    });
+  } else {
+    console.error("Multimedia: faltan IDs o TOTAL_FORMS. Revisa media-forms/addMediaRow/media-empty-form.");
+  }
+
+  // ===================== Bootstrap quick =====================
   document.querySelectorAll("input[type=text], input[type=date], textarea, select").forEach(el => {
     if (el.tagName === "SELECT") {
-      // si ya está diseñado para TomSelect (clase tomselect) no tocar
       if (el.classList.contains("tomselect")) return;
-      // si es el select de procedimientos (hecho a mano) o shared no tocar si quieres
       el.classList.add("form-select");
       return;
     }
     if (!el.classList.contains("form-check-input")) el.classList.add("form-control");
   });
 
-  // checkboxes
   document.querySelectorAll("input[type=checkbox]").forEach(el => {
     if (["id_publicado","id_interes_docente"].includes(el.id)) return;
     el.classList.add("form-check-input");
   });
 
-  // --- TomSelect inits: usar .tomselect para identificarlos ---
+  // ===================== TomSelect helpers =====================
   function clearTypedText(ts){ ts.setTextboxValue(""); ts.refreshOptions(false); }
 
   document.querySelectorAll("select.tomselect").forEach(el => {
@@ -335,7 +457,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // shared_groups: permitir crear (si existe)
+  // shared_groups con create AJAX
   const groupsEl = document.querySelector("#id_shared_groups");
   if (groupsEl) {
     if (groupsEl.tomselect) groupsEl.tomselect.destroy();
@@ -367,7 +489,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // toggle simple: publicado / interes docente
+  // ===================== Toggles Publicado / Interés docente =====================
   function bindToggle(id){
     const cb = document.getElementById(id);
     const label = document.querySelector(`label[for="${id}"]`);
@@ -390,12 +512,11 @@ document.addEventListener("DOMContentLoaded", () => {
 
   if (publicadoCheckbox) {
     publicadoCheckbox.addEventListener("change", togglePublicadoEn);
-    const publicadoLabel = document.querySelector('label[for="id_publicado"]');
-    publicadoLabel?.addEventListener("click", () => setTimeout(togglePublicadoEn, 0));
+    document.querySelector('label[for="id_publicado"]')?.addEventListener("click", () => setTimeout(togglePublicadoEn, 0));
     togglePublicadoEn();
   }
 
-  // acordeón procedimientos (igual que antes)
+  // ===================== Acordeón procedimientos =====================
   const procGroups = document.querySelectorAll(".proc-group");
   function updateCount(groupEl) {
     const countEl = groupEl.querySelector(".proc-count");
@@ -414,12 +535,13 @@ document.addEventListener("DOMContentLoaded", () => {
       header.setAttribute("aria-expanded", String(!expanded));
       body.hidden = expanded;
     });
-    groupEl.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.addEventListener("change", () => updateCount(groupEl)));
+    groupEl.querySelectorAll('input[type="checkbox"]').forEach(cb =>
+      cb.addEventListener("change", () => updateCount(groupEl))
+    );
   });
 
 });
 </script>
-
 
 {% endblock %}
 

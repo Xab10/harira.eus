@@ -1,11 +1,13 @@
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse
-from .models import Case, Tag
+from django.http import JsonResponse, FileResponse, Http404
+from .models import Case, Tag, CaseMedia
 from .forms import CaseForm, CaseMediaFormSet, CaseMediaForm
 from django.urls import reverse
 from django.forms import inlineformset_factory
+from django.conf import settings
+from google.cloud import storage
 
 def user_can_access_case(user, case) -> bool:
     if case.created_by_id == user.id:
@@ -45,6 +47,41 @@ def cic_exists(request):
         "case_id": case.pk,
         "edit_url": reverse("case_edit", args=[case.pk]),
     })
+
+@login_required
+def private_media(request, path):
+    """
+    Sirve archivos privados desde GCS (o local en dev), controlando permisos por Case.
+    path = "case_media/xxx.jpg"
+    """
+    # Busca el CaseMedia por el nombre exacto guardado en FileField
+    media = get_object_or_404(CaseMedia, file=path)
+
+    # Permisos: mismo criterio que usas para casos
+    if not user_can_access_case(request.user, media.case):
+        raise Http404()
+
+    # DEV: si estás en local y usas MEDIA_ROOT
+    if settings.DEBUG and getattr(settings, "DEFAULT_FILE_STORAGE", "") == "":
+        # intenta servir desde disco
+        import os
+        full_path = os.path.join(settings.MEDIA_ROOT, path)
+        try:
+            return FileResponse(open(full_path, "rb"))
+        except FileNotFoundError:
+            raise Http404()
+
+    # PROD: Google Cloud Storage
+    bucket_name = settings.GS_BUCKET_NAME  # ponlo en settings
+    client = storage.Client()
+    bucket = client.bucket(bucket_name)
+    blob = bucket.blob(path)
+
+    if not blob.exists():
+        raise Http404()
+
+    # stream directo
+    return FileResponse(blob.open("rb"), content_type=blob.content_type)
 
 @login_required
 def case_list(request):
@@ -205,9 +242,7 @@ def case_edit(request, pk):
         "mode": "edit",
     })
 
-from django.shortcuts import get_object_or_404, redirect, render
-from django.contrib.auth.decorators import login_required
-from django.db.models import Q
+
 
 @login_required
 def case_delete(request, pk):
