@@ -29,7 +29,7 @@ if DB_NAME:
             "USER": os.environ["DB_USER"],
             "PASSWORD": os.environ["DB_PASSWORD"],
             "HOST": "/cloudsql/" + os.environ["INSTANCE_CONNECTION_NAME"],
-            "PORT": os.getenv("DB_PORT", "5432"),
+            "PORT": "5432",
         }
     }
 else:
