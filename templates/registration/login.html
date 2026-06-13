@@ -1,26 +1,67 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="row justify-content-center">
-  <div class="col-12 col-sm-10 col-md-6 col-lg-4">
-    <div class="card">
-      <div class="card-body">
-        <h5 class="mb-3">Iniciar sesión</h5>
+<div class="d-flex align-items-center justify-content-center" style="min-height: calc(100vh - 120px);">
+  <div class="w-100" style="max-width: 400px;">
+    <div class="card shadow-lg border-0">
+      <div class="card-body p-5">
+        <h4 class="text-center mb-4 fw-bold">Iniciar sesión</h4>
 
         <form method="post">
           {% csrf_token %}
-          {{ form.as_p }}
 
-          <button class="btn btn-success w-100" type="submit">Entrar</button>
+          <!-- Username -->
+          <div class="mb-3">
+            {{ form.username }}
+            {% if form.username.errors %}
+              <div class="text-danger small mt-1">{{ form.username.errors }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Password -->
+          <div class="mb-4">
+            {{ form.password }}
+            {% if form.password.errors %}
+              <div class="text-danger small mt-1">{{ form.password.errors }}</div>
+            {% endif %}
+          </div>
+
+          <!-- Errores generales -->
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger mb-3">
+              {{ form.non_field_errors }}
+            </div>
+          {% endif %}
+
+          <!-- Botón -->
+          <button class="btn btn-success w-100 py-2 fw-semibold" type="submit">Entrar</button>
         </form>
 
-        <!-- Solo móvil: link a registrarse debajo -->
-        <div class="text-center mt-3">
-          <span class="text-muted">¿No tienes cuenta?</span>
-          <a href="{% url 'signup' %}" class="ms-1">Registrarse</a>
+        <!-- Link a registrarse -->
+        <div class="text-center mt-4">
+          <span class="text-muted small">¿No tienes cuenta?</span>
+          <a href="{% url 'signup' %}" class="ms-2">Registrarse</a>
         </div>
 
       </div>
     </div>
   </div>
 </div>
+
+<style>
+  input[type="text"],
+  input[type="password"] {
+    width: 100% !important;
+    padding: 0.6rem 0.75rem !important;
+    border: 1px solid #dee2e6 !important;
+    border-radius: 0.375rem !important;
+    font-size: 1rem !important;
+  }
+
+  input[type="text"]:focus,
+  input[type="password"]:focus {
+    border-color: #80c34f !important;
+    box-shadow: 0 0 0 0.2rem rgba(128, 195, 79, 0.25) !important;
+    outline: none !important;
+  }
+</style>
 {% endblock %}

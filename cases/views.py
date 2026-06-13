@@ -91,6 +91,7 @@ def case_list(request):
         "patologia": request.GET.getlist("patologia"),
         "groups": request.GET.getlist("groups"),
         "docente": request.GET.get("docente"),
+        "multimedia": request.GET.get("multimedia"),
         "edad": request.GET.get("edad") or "",
     }
 
@@ -134,6 +135,10 @@ def case_list(request):
     if docente in ("1", "true", "True", "on"):
         qs = qs.filter(interes_docente=True)
 
+    multimedia = request.GET.get("multimedia")
+    if multimedia in ("1", "true", "True", "on"):
+        qs = qs.filter(media__file__isnull=False).distinct()
+
     qs = qs.distinct().order_by("-fecha", "-id")
 
     edad = request.GET.get("edad")
@@ -158,6 +163,7 @@ def case_list(request):
             "patologia": request.GET.getlist("patologia"),
             "groups": group_ids,
             "docente": docente,
+            "multimedia": multimedia,
             "edad": edad,
         }
     }
@@ -257,3 +263,27 @@ def case_delete(request, pk):
         return redirect("case_list")
 
     return render(request, "cases/case_confirm_delete.html", {"case": case})
+
+
+@login_required
+def case_detail(request, pk):
+    case = get_object_or_404(Case, pk=pk)
+
+    if not user_can_access_case(request.user, case):
+        return redirect("case_list")
+
+    from .forms import PROC_CHOICES, PROC_GROUPS
+    proc_labels = dict(PROC_CHOICES)
+
+    procedimientos_with_labels = []
+    for proc in case.procedimientos:
+        label = proc_labels.get(proc, proc)
+        procedimientos_with_labels.append((proc, label))
+
+    ctx = {
+        "case": case,
+        "proc_groups": PROC_GROUPS,
+        "proc_labels": proc_labels,
+        "procedimientos_with_labels": procedimientos_with_labels,
+    }
+    return render(request, "cases/case_detail.html", ctx)

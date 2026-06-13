@@ -1,0 +1,219 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-12 col-lg-10">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h5 class="mb-0">Caso {{ case.cic }}</h5>
+      <div class="gap-2 d-flex">
+        <a class="btn btn-outline-primary" href="{% url 'case_edit' case.pk %}">Editar</a>
+        <a class="btn btn-outline-secondary" href="{% url 'case_list' %}">Volver</a>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-body">
+
+        {# ===== DATOS BÁSICOS ===== #}
+        <div class="row g-3 mb-4">
+          <div class="col-md-3">
+            <h6 class="text-muted mb-1">CIC</h6>
+            <p class="mb-0 fs-5"><strong>{{ case.cic }}</strong></p>
+          </div>
+          <div class="col-md-5">
+            <h6 class="text-muted mb-1">Centro Médico</h6>
+            <p class="mb-0 fs-5"><strong>{{ case.centro_medico }}</strong></p>
+          </div>
+          <div class="col-md-4">
+            <h6 class="text-muted mb-1">Fecha</h6>
+            <p class="mb-0 fs-5"><strong>{{ case.fecha|date:"d/m/Y" }}</strong></p>
+          </div>
+
+          <div class="col-md-3">
+            <h6 class="text-muted mb-1">Grupo de Edad</h6>
+            <p class="mb-0 fs-5"><strong>{{ case.get_grupo_edad_display }}</strong></p>
+          </div>
+        </div>
+
+        {# ===== TAGS ===== #}
+        <div class="row g-3 mb-4">
+          <div class="col-md-4">
+            <h6 class="text-muted mb-2">Secciones</h6>
+            {% if case.secciones.all %}
+              <div class="d-flex flex-wrap gap-2">
+                {% for tag in case.secciones.all %}
+                  <span class="badge bg-secondary">{{ tag.name }}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted small">—</p>
+            {% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <h6 class="text-muted mb-2">Localizaciones</h6>
+            {% if case.localizaciones.all %}
+              <div class="d-flex flex-wrap gap-2">
+                {% for tag in case.localizaciones.all %}
+                  <span class="badge bg-secondary">{{ tag.name }}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted small">—</p>
+            {% endif %}
+          </div>
+
+          <div class="col-md-4">
+            <h6 class="text-muted mb-2">Patologías</h6>
+            {% if case.patologias.all %}
+              <div class="d-flex flex-wrap gap-2">
+                {% for tag in case.patologias.all %}
+                  <span class="badge bg-secondary">{{ tag.name }}</span>
+                {% endfor %}
+              </div>
+            {% else %}
+              <p class="text-muted small">—</p>
+            {% endif %}
+          </div>
+        </div>
+
+        {# ===== DIAGNÓSTICO Y COMENTARIOS ===== #}
+        <div class="row g-3 mb-4">
+          <div class="col-12">
+            <h6 class="fw-bold mb-2" style="color: #333;">Diagnóstico Inicial</h6>
+            <p class="text-muted fs-6">{{ case.diagnostico_inicial|linebreaks }}</p>
+          </div>
+          <div class="col-12">
+            <h6 class="fw-bold mb-2" style="color: #333;">Comentarios</h6>
+            <p class="text-muted fs-6">{{ case.comentarios|linebreaks }}</p>
+          </div>
+        </div>
+
+        {# ===== PRUEBAS DE IMAGEN ===== #}
+        {% if case.pruebas_imagen %}
+          <div class="mb-4">
+            <div class="section-header">
+              <span>Pruebas de Imagen</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              {% for prueba in case.pruebas_imagen %}
+                <span class="badge bg-secondary">{{ prueba }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {# ===== PROCEDIMIENTOS ===== #}
+        {% if procedimientos_with_labels %}
+          <div class="mb-4">
+            <div class="section-header">
+              <span>Cirugías / Intervenciones</span>
+            </div>
+            <div class="d-flex flex-wrap gap-3">
+              {% for proc_code, proc_label in procedimientos_with_labels %}
+                <span class="badge bg-secondary" style="font-size: 1rem; padding: 0.6rem 0.9rem;">{{ proc_label }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {# ===== PUBLICACIÓN Y DOCENCIA ===== #}
+        <div class="row g-3 mb-4">
+          <div class="col-md-6">
+            <h6 class="text-muted mb-2">Estado</h6>
+            <div class="d-flex gap-3">
+              <div>
+                <span class="badge {% if case.publicado %}bg-secondary{% else %}bg-light text-dark{% endif %}">
+                  {% if case.publicado %}Publicado{% else %}No publicado{% endif %}
+                </span>
+              </div>
+              {% if case.interes_docente %}
+                <div>
+                  <span class="badge bg-secondary">Interés docente</span>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          {% if case.publicado_en %}
+            <div class="col-md-6">
+              <h6 class="text-muted mb-2">Publicado en</h6>
+              <p class="mb-0">{{ case.publicado_en }}</p>
+            </div>
+          {% endif %}
+        </div>
+
+        {# ===== COMPARTIDO CON GRUPOS ===== #}
+        {% if case.shared_groups.all %}
+          <div class="mb-4">
+            <div class="section-header">
+              <span>Compartido con Grupos</span>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+              {% for group in case.shared_groups.all %}
+                <span class="badge bg-secondary">{{ group.name }}</span>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {# ===== MULTIMEDIA ===== #}
+        {% if case.media.all %}
+          <div class="mb-4">
+            <div class="section-header">
+              <span>Multimedia</span>
+            </div>
+            <div class="row g-3">
+              {% for media in case.media.all %}
+                <div class="col-md-6 col-lg-4">
+                  <div class="card">
+                    {% if media.file %}
+                      <div style="background: #f5f5f5; height: 200px; display: flex; align-items: center; justify-content: center; border-radius: 8px 8px 0 0;">
+                        <a href="{% url 'private_media' media.file.name %}" target="_blank" rel="noopener" class="text-center">
+                          <p class="mb-1">📎</p>
+                          <small>{{ media.file.name|truncatechars:25 }}</small>
+                        </a>
+                      </div>
+                    {% endif %}
+                    <div class="card-body">
+                      <h6 class="card-title">{{ media.caption|default:"Sin título" }}</h6>
+                      {% if media.file %}
+                        <a href="{% url 'private_media' media.file.name %}" class="btn btn-sm btn-outline-primary" target="_blank" rel="noopener">
+                          Ver archivo
+                        </a>
+                      {% endif %}
+                    </div>
+                  </div>
+                </div>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {# ===== METADATOS ===== #}
+        <div class="row g-3 mt-4 pt-3 border-top">
+          <div class="col-md-6">
+            <h6 class="text-muted mb-1">Creado por</h6>
+            <p class="mb-0">{{ case.created_by.get_full_name|default:case.created_by.username }}</p>
+          </div>
+          <div class="col-md-6">
+            <h6 class="text-muted mb-1">Creado el</h6>
+            <p class="mb-0">{{ case.created_at|date:"d/m/Y H:i" }}</p>
+          </div>
+        </div>
+
+        {# ===== BOTONES DE ACCIÓN ===== #}
+        <div class="d-flex justify-content-between gap-2 mt-4">
+          <a class="btn btn-outline-danger" href="{% url 'case_delete' case.pk %}">
+            Eliminar
+          </a>
+          <div class="gap-2 d-flex">
+            <a class="btn btn-outline-primary" href="{% url 'case_edit' case.pk %}">Editar</a>
+            <a class="btn btn-outline-secondary" href="{% url 'case_list' %}">Volver</a>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
